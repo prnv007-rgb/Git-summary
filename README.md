@@ -1,5 +1,5 @@
 ﻿# Git Summary
-# Git Summarizer 🧠
+# Git Summarizer 
 
 A simple tool that lets you **ask questions about any GitHub repo**.
 
