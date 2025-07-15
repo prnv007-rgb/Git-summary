@@ -25,8 +25,5 @@ It clones the repository, reads the files, indexes them using embeddings, and th
 
 ---
 
-## Getting Started
-
-### Install
 
 
