@@ -29,7 +29,4 @@ It clones the repository, reads the files, indexes them using embeddings, and th
 
 ### Install
 
-```bash
-git clone https://github.com/your-username/git-summarizer.git
-cd git-summarizer
-pip install -r requirements.txt
+
