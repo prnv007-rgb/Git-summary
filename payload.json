@@ -1,0 +1,6 @@
+{
+  "repo_url": "https://github.com/rudrajikadra/Movie-Recommendation-System-Using-Python-and-Pandas.git",
+  "branch": "master",
+  "chunk_size": 800,
+  "chunk_overlap": 100
+}
