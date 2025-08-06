@@ -1,3 +1,33 @@
+/* --- ROOT & GLOBAL STYLES --- */
+:root {
+  font-family: 'ui-monospace', 'Cascadia Code', 'Source Code Pro', 'Menlo', 'Consolas', 'Liberation Mono', monospace;
+  line-height: 1.5;
+  font-weight: 400;
+  color: rgba(230, 230, 255, 0.9);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- THE "HACKER GRID" BACKGROUND --- */
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #020412;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.1) 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  animation: moveGrid 20s linear infinite;
+}
+
+@keyframes moveGrid {
+  from { background-position: 0 0; }
+  to { background-position: 3rem 0; }
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -5,38 +35,210 @@
   text-align: center;
 }
 
+/* --- TYPOGRAPHY & LINKS --- */
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.7), 0 0 20px rgba(0, 240, 255, 0.5);
+}
+
+a {
+  font-weight: 500;
+  color: #00f0ff; /* Neon Cyan */
+  text-decoration: none;
+  text-shadow: 0 0 5px rgba(0, 240, 255, 0.7);
+  transition: color 0.25s, text-shadow 0.25s;
+}
+a:hover {
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+/* --- UI CARD & BUTTONS --- */
+.card {
+  padding: 2.5em;
+  background: rgba(10, 10, 31, 0.7);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 8px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(0, 240, 255, 0.7);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.2);
+}
+
+button {
+  border-radius: 6px;
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  color: rgba(0, 240, 255, 0.9);
+  background-color: transparent;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background-color: rgba(0, 240, 255, 0.1);
+  color: #ffffff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+  text-shadow: 0 0 5px #ffffff;
+}
+
+button:active {
+  background-color: rgba(0, 240, 255, 0.2);
+  transform: scale(0.98);
+} 
+
+button:focus,
+button:focus-visible {
+  outline: 2px solid #00f0ff;
+  outline-offset: 2px;
+}
+
+
+button.loading {
+  cursor: wait;
+}
+.thinking-text {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+.dot-container {
+  display: inline-block;
+  margin-left: 4px;
+}
+.dot {
+  opacity: 0;
+  animation: dot-fade-in 1.5s infinite;
+}
+.dot:nth-child(2) {
+  animation-delay: 0.25s;
+}
+.dot:nth-child(3) {
+  animation-delay: 0.5s;
+}
+@keyframes dot-fade-in {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
-  transition: filter 300ms;
+  transition: filter 300ms ease;
 }
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 1.5em #00f0ffaa);
 }
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  filter: drop-shadow(0 0 1.5em #61dafbaa);
 }
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
 .read-the-docs {
-  color: #888;
+  color: rgba(255, 255, 255, 0.5);
+}
+.input-group {
+  display: flex;
+  gap: 10px; 
+  width: 100%;
+}
+
+.input-group input {
+  flex-grow: 1; 
+  background: rgba(10, 10, 31, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 6px;
+  color: rgba(230, 230, 255, 0.9);
+  padding: 0.6em 1em;
+  font-family: inherit;
+  font-size: 1em;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #00f0ff;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+}
+
+.input-group button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.input-group button:disabled:hover {
+  background-color: transparent; 
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+.answer-container {
+  margin-top: 2rem;
+  text-align: left; 
+  border-color: rgba(0, 255, 150, 0.4); 
+}
+
+.answer-container h2,
+.answer-container h3 {
+  color: #00f0ff;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  margin-bottom: 1em;
+}
+
+.answer-text {
+  line-height: 1.6;
+  font-size: 1.1em;
+  
+  white-space: pre-wrap; 
+  color: rgba(230, 230, 255, 0.95);
+  min-height: 1.6em; 
+}
+
+.typing-cursor {
+  display: inline-block;
+  background-color: #00f0ff;
+  width: 10px;
+  height: 1.2em;
+  margin-left: 5px;
+  animation: blink 1s infinite;
+  vertical-align: text-bottom; 
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.source-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 1.5em;
+}
+
+.source-item {
+  background-color: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.1);
+  border-radius: 4px;
+  padding: 0.5em 1em;
+  margin-bottom: 0.5em;
+  font-size: 0.9em;
+  color: rgba(230, 230, 255, 0.8);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.source-item:hover {
+  background-color: rgba(0, 240, 255, 0.1);
+  border-color: rgba(0, 240, 255, 0.4);
 }

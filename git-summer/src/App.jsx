@@ -11,7 +11,7 @@ function App() {
   return (
     <div style={{ padding: '2rem' }}>
       <h1>GitHub Repo RAG Assistant</h1>
-
+    
       <RepoInputForm setRepoUrl={setRepoUrl} />
       <hr />
       {repoUrl && <QueryForm repoUrl={repoUrl} setAnswer={setAnswer} setSources={setSources} />}
