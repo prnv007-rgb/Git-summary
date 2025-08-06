@@ -4,8 +4,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from langchain_community.document_loaders import GitLoader
 from langchain.text_splitter import CharacterTextSplitter
-# NEW: Import the new embedding and chat classes
-from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
+# NEW: Import Cohere for embeddings and Groq for chat
+from langchain_cohere import CohereEmbeddings
 from langchain_groq import ChatGroq
 from langchain.vectorstores import FAISS
 from typing import Optional
@@ -14,9 +14,12 @@ import subprocess
 
 app = FastAPI(title="GitHub RAG Service")
 
-# --- THIS IS THE LINE TO FIX ---
-# Temporarily allowing all origins with a wildcard for debugging the preflight issue.
-origins = ["*"]
+# --- IMPORTANT: SECURE CORS SETTINGS ---
+# Using your specific Vercel URL is more secure than a wildcard.
+origins = [
+    "https://git-summary-wyrc.vercel.app",
+    "http://localhost:5173",
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -58,7 +61,6 @@ def get_default_branch(repo_url: str) -> str:
             if line.startswith("ref:"):
                 return line.split()[1].rsplit("/", 1)[-1]
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
-        # Fallback if the command fails or times out
         pass
     return "main"
 
@@ -96,10 +98,11 @@ def build_index(req: BuildRequest):
         print(f"📄 Total chunks: {len(chunks)}")
 
         if not chunks:
-            raise ValueError("❌ No chunks generated. Check if files are empty.")
+            raise ValueError("❌ No chunks generated.")
 
-        # NEW: Use the free and fast embedding model from FastEmbed
-        embedder = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
+        # NEW: Use the Cohere embedding model via API
+        # This will automatically use the COHERE_API_KEY from your Render environment
+        embedder = CohereEmbeddings(model="embed-english-light-v3.0")
         
         vectorstore = FAISS.from_documents(chunks, embedding=embedder)
         vectorstore.save_local(str(index_path))
@@ -118,8 +121,8 @@ def query_index(req: QueryRequest):
         raise HTTPException(status_code=404, detail="Index not found. Please build first.")
     
     try:
-        # Load index with the same embedding model
-        embedder = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
+        # Load index with the same Cohere embedding model
+        embedder = CohereEmbeddings(model="embed-english-light-v3.0")
         vectorstore = FAISS.load_local(
             str(index_path),
             embeddings=embedder,
@@ -129,8 +132,7 @@ def query_index(req: QueryRequest):
         docs = retriever.get_relevant_documents(req.question)
         context = "\n\n".join([d.page_content for d in docs])
 
-        # NEW: Call the Groq LLM using the API key from the environment
-        # The GROQ_API_KEY is automatically read from your Render environment variables
+        # Call the Groq LLM using the API key from the environment
         llm = ChatGroq(model_name="llama3-8b-8192", temperature=0)
         
         prompt = f"""

@@ -10,4 +10,5 @@ gitpython
 gunicorn
 langchain-groq
 langchain-community
-fastembed
+langchain-cohere  # <-- Add this line
+fastembed  
