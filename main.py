@@ -16,7 +16,7 @@ app = FastAPI(title="GitHub RAG Service")
 
 # --- IMPORTANT: CONFIGURE FOR PRODUCTION ---
 # Replace this with your actual Vercel frontend URL once it's deployed
-VERCEL_FRONTEND_URL = "https://your-vercel-app-name.vercel.app" 
+VERCEL_FRONTEND_URL = "https://git-summary-wyrc.vercel.app/" 
 
 app.add_middleware(
     CORSMiddleware,
