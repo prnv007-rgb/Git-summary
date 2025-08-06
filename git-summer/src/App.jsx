@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import RepoInputForm from './components/input';
 import QueryForm from './components/query';
 import AnswerDisplay from './components/Answer';
-import React, { useState } from 'react';
+import { useState } from 'react';  
 function App() {
   const [repoUrl, setRepoUrl] = useState('');
   const [answer, setAnswer] = useState('');
