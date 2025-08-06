@@ -4,30 +4,35 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from langchain_community.document_loaders import GitLoader
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.embeddings import OllamaEmbeddings
+# NEW: Import the new embedding and chat classes
+from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
+from langchain_groq import ChatGroq
 from langchain.vectorstores import FAISS
-import requests
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 import subprocess
+
 app = FastAPI(title="GitHub RAG Service")
+
+# --- IMPORTANT: CONFIGURE FOR PRODUCTION ---
+# Replace this with your actual Vercel frontend URL once it's deployed
+VERCEL_FRONTEND_URL = "https://your-vercel-app-name.vercel.app" 
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Or replace "*" with ["http://localhost:3000"] for stricter access
+    allow_origins=[VERCEL_FRONTEND_URL, "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-@app.get("/")
-def read_root():
-    return {"message": "RAG Backend is running!"}
+
 # Directory to store cloned repos and FAISS indexes
 REPO_ROOT = Path("./repos")
 INDEX_ROOT = Path("./faiss_indexes")
 REPO_ROOT.mkdir(parents=True, exist_ok=True)
 INDEX_ROOT.mkdir(parents=True, exist_ok=True)
 
-# Pydantic models
+# Pydantic models for request data
 class BuildRequest(BaseModel):
     repo_url: str
     branch: Optional[str] = None
@@ -39,71 +44,43 @@ class QueryRequest(BaseModel):
     question: str
     k: int = 5
 
-
+# Helper functions to get repo name and default branch
 def get_repo_name(repo_url: str) -> str:
     return Path(repo_url.rstrip("/.")).stem
 
 def get_default_branch(repo_url: str) -> str:
-    """
-    Returns the actual default branch of a GitHub repo, e.g. 'main', 'master' or any custom name.
-    1. Uses `git ls-remote --symref HEAD` to see where HEAD points.
-    2. If that fails, lists all branches and picks the first one.
-    """
-    # 1️⃣ Try to read the symbolic HEAD ref directly
     try:
         result = subprocess.run(
             ["git", "ls-remote", "--symref", repo_url, "HEAD"],
-            capture_output=True,
-            text=True,
-            check=True
+            capture_output=True, text=True, check=True, timeout=30
         )
         for line in result.stdout.splitlines():
             if line.startswith("ref:"):
-                # line looks like: "ref: refs/heads/custom-branch HEAD"
                 return line.split()[1].rsplit("/", 1)[-1]
-    except subprocess.CalledProcessError:
-        # Couldn’t resolve symref (rare), fall back
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        # Fallback if the command fails or times out
         pass
+    return "main"
 
-    # 2️⃣ Fallback: list all remote heads and pick the first one
-    try:
-        result = subprocess.run(
-            ["git", "ls-remote", "--heads", repo_url],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        # Parse lines like: "<hash>\trefs/heads/branch-name"
-        branches = [
-            ref.split("/")[-1]
-            for ref in (line.split()[1] for line in result.stdout.splitlines())
-            if ref.startswith("refs/heads/")
-        ]
-        if branches:
-            return branches[0]
-    except subprocess.CalledProcessError:
-        pass
+# Root endpoint for health checks
+@app.get("/")
+def read_root():
+    return {"message": "RAG Backend is running!"}
 
-    # 3️⃣ As a very last resort (should rarely hit this):
-    return "master"
-
-
+# --- UPDATED /build ENDPOINT ---
 @app.post("/build")
 def build_index(req: BuildRequest):
     repo_name = get_repo_name(req.repo_url)
     local_path = REPO_ROOT / repo_name
     index_path = INDEX_ROOT / repo_name
-   
+    
     try:
-        # 🌿 Automatically resolve branch if not provided
-        branch =get_default_branch(req.repo_url)
+        branch = get_default_branch(req.repo_url)
         print(f"🌿 Using branch: {branch}")
         print("⏳ Cloning repo...")
 
         loader = GitLoader(
-            clone_url=req.repo_url,
-            repo_path=str(local_path),
-            branch=branch,
+            clone_url=req.repo_url, repo_path=str(local_path), branch=branch,
             file_filter=lambda f: not any(part.startswith('.') for part in Path(f).parts)
         )
         docs = loader.load()
@@ -113,9 +90,7 @@ def build_index(req: BuildRequest):
             raise ValueError("❌ No matching source code files found in repo.")
 
         splitter = CharacterTextSplitter(
-            chunk_size=req.chunk_size,
-            chunk_overlap=req.chunk_overlap,
-            length_function=len
+            chunk_size=req.chunk_size, chunk_overlap=req.chunk_overlap
         )
         chunks = splitter.split_documents(docs)
         print(f"📄 Total chunks: {len(chunks)}")
@@ -123,7 +98,9 @@ def build_index(req: BuildRequest):
         if not chunks:
             raise ValueError("❌ No chunks generated. Check if files are empty.")
 
-        embedder = OllamaEmbeddings(model="mxbai-embed-large")
+        # NEW: Use the free and fast embedding model from FastEmbed
+        embedder = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
+        
         vectorstore = FAISS.from_documents(chunks, embedding=embedder)
         vectorstore.save_local(str(index_path))
 
@@ -132,19 +109,17 @@ def build_index(req: BuildRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
+# --- UPDATED /query ENDPOINT ---
 @app.post("/query")
 def query_index(req: QueryRequest):
-    """
-    Query the FAISS index for a given question, then ask LLM with retrieved context.
-    """
     repo_name = get_repo_name(req.repo_url)
     index_path = INDEX_ROOT / repo_name
     if not index_path.exists():
         raise HTTPException(status_code=404, detail="Index not found. Please build first.")
+    
     try:
-        # Load index
-        embedder = OllamaEmbeddings(model="mxbai-embed-large")
+        # Load index with the same embedding model
+        embedder = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
         vectorstore = FAISS.load_local(
             str(index_path),
             embeddings=embedder,
@@ -154,7 +129,10 @@ def query_index(req: QueryRequest):
         docs = retriever.get_relevant_documents(req.question)
         context = "\n\n".join([d.page_content for d in docs])
 
-        # Call LLM
+        # NEW: Call the Groq LLM using the API key from the environment
+        # The GROQ_API_KEY is automatically read from your Render environment variables
+        llm = ChatGroq(model_name="llama3-8b-8192", temperature=0)
+        
         prompt = f"""
 You are a helpful assistant with knowledge of the following GitHub repo.
 
@@ -164,12 +142,8 @@ Context:
 Based on the context above, answer this question:
 {req.question}
 """
-        response = requests.post(
-            "http://localhost:11434/api/generate",
-            json={"model": "llama3", "prompt": prompt, "stream": False}
-        )
-        response.raise_for_status()
-        answer = response.json().get("response", "")
+        answer = llm.invoke(prompt).content
+        
         return {"answer": answer, "source_chunks": [d.metadata.get("file_path") for d in docs]}
 
     except Exception as e:
@@ -179,4 +153,3 @@ if __name__ == "__main__":
     print("🚀 Starting FastAPI on http://0.0.0.0:8000 …")
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-# To run this app, use the command:

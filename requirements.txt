@@ -8,3 +8,6 @@ ollama
 requests
 gitpython
 gunicorn
+langchain-groq
+langchain-community
+fastembed
