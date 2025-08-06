@@ -14,13 +14,13 @@ import subprocess
 
 app = FastAPI(title="GitHub RAG Service")
 
-# --- IMPORTANT: CONFIGURE FOR PRODUCTION ---
-# Replace this with your actual Vercel frontend URL once it's deployed
-VERCEL_FRONTEND_URL = "https://git-summary-wyrc.vercel.app/" 
+# --- THIS IS THE LINE TO FIX ---
+# Temporarily allowing all origins with a wildcard for debugging the preflight issue.
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[VERCEL_FRONTEND_URL, "http://localhost:5173"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
