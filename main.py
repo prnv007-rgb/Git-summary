@@ -18,7 +18,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+@app.get("/")
+def read_root():
+    return {"message": "RAG Backend is running!"}
 # Directory to store cloned repos and FAISS indexes
 REPO_ROOT = Path("./repos")
 INDEX_ROOT = Path("./faiss_indexes")
