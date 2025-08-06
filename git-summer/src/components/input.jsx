@@ -1,43 +1,94 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-function RepoInputForm({ setRepoUrl }) {
+
+// It's styled to match the rest of your application.
+function IndexForm({ setRepoUrl }) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [isError, setIsError] = useState(false);
 
-  const handleBuild = async () => {
+  const handleBuildIndex = async () => {
+    if (!url.trim()) {
+      setStatusMessage('Please enter a repository URL.');
+      setIsError(true);
+      return;
+    }
     setLoading(true);
+    setStatusMessage('');
+    setIsError(false);
+
     try {
-      await axios.post('http://localhost:8000/build', {
+      // Use the environment variable for the API URL for deployment flexibility.
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      
+      // The endpoint and payload from your provided code.
+      await axios.post(`${API_URL}/build`, {
         repo_url: url,
         branch: 'main',
         chunk_size: 800,
         chunk_overlap: 100
       });
-      setRepoUrl(url);
-      alert('FAISS index built successfully!');
+      
+      setStatusMessage('FAISS index built successfully! You can now ask questions.');
+      setRepoUrl(url); // Notify the parent App component that the URL is set.
+      
     } catch (err) {
-      alert('Error building index: ' + err.message);
+      const errorMessage = err.response ? JSON.stringify(err.response.data) : err.message;
+      setStatusMessage(`Error building index: ${errorMessage}`);
+      setIsError(true);
     } finally {
       setLoading(false);
     }
   };
 
+  // Allows pressing Enter to submit
+  const handleKeyPress = (event) => {
+    if (event.key === 'Enter' && !loading) {
+      handleBuildIndex();
+    }
+  };
+
   return (
-    <div>
+    <div className="card">
       <h2>Step 1: Enter GitHub Repo</h2>
-      <input
-        type="text"
-        placeholder="https://github.com/user/repo"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        style={{ width: '60%', marginRight: '10px' }}
-      />
-      <button onClick={handleBuild} disabled={loading}>
-        {loading ? 'Building...' : 'Build RAG Index'}
-      </button>
+      <div className="input-group">
+        <input
+          type="text"
+          placeholder="https://github.com/user/repo"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          onKeyPress={handleKeyPress}
+          disabled={loading}
+        />
+        <button
+          onClick={handleBuildIndex}
+          disabled={loading || !url.trim()}
+          className={loading ? 'loading' : ''}
+        >
+          {loading ? (
+            <span className="thinking-text">
+              Building
+              <span className="dot-container">
+                <span className="dot">.</span>
+                <span className="dot">.</span>
+                <span className="dot">.</span>
+              </span>
+            </span>
+          ) : (
+            'Build RAG Index'
+          )}
+        </button>
+      </div>
+      {/* Display status messages directly in the UI instead of using alert() */}
+      {statusMessage && (
+        <p className={`status-message ${isError ? 'error' : 'success'}`}>
+          {statusMessage}
+        </p>
+      )}
     </div>
   );
 }
 
-export default RepoInputForm;
+export default IndexForm;

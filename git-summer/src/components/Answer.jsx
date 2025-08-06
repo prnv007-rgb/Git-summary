@@ -10,12 +10,12 @@ const useTypewriter = (text, speed = 20) => {
   const [displayedText, setDisplayedText] = useState('');
 
   useEffect(() => {
-    // Reset the text when a new answer comes in
+  
     setDisplayedText('');
 
     if (text) {
       let i = 0;
-      // Set up an interval to add one character at a time
+      
       const typingInterval = setInterval(() => {
         if (i < text.length) {
           setDisplayedText(prev => prev + text.charAt(i));
@@ -31,23 +31,23 @@ const useTypewriter = (text, speed = 20) => {
         clearInterval(typingInterval);
       };
     }
-  }, [text, speed]); // Rerun effect if text or speed changes
+  }, [text, speed]); 
 
   return displayedText;
 };
 
 function AnswerDisplay({ answer, sources }) {
-  // Use the custom hook to get the streaming text
+  
   const streamedAnswer = useTypewriter(answer);
 
-  // Don't render anything if there's no answer yet
+  
   if (!answer) return null;
 
-  // Check if the answer is fully typed out to hide the cursor
+ 
   const isTyping = streamedAnswer.length < answer.length;
 
   return (
-    // Use new CSS classes for styling
+   
     <div className="card answer-container">
       <h2>Answer</h2>
       <p className="answer-text">
