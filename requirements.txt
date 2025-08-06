@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic
+langchain-community
+langchain
+faiss-cpu
+ollama
+requests
+gitpython
