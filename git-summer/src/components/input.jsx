@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-
+// This component handles providing a repo URL and building the index.
 // It's styled to match the rest of your application.
 function IndexForm({ setRepoUrl }) {
   const [url, setUrl] = useState('');
@@ -23,12 +23,12 @@ function IndexForm({ setRepoUrl }) {
       // Use the environment variable for the API URL for deployment flexibility.
       const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
       
-      // The endpoint and payload from your provided code.
+      // The payload is updated to let the backend handle the branch logic.
       await axios.post(`${API_URL}/build`, {
         repo_url: url,
-        branch: 'main',
         chunk_size: 800,
         chunk_overlap: 100
+        // The 'branch' field is intentionally removed.
       });
       
       setStatusMessage('FAISS index built successfully! You can now ask questions.');
