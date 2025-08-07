@@ -45,7 +45,7 @@ class BuildRequest(BaseModel):
 class QueryRequest(BaseModel):
     repo_url: str
     question: str
-    k: int = 5
+    k: int = 3
 
 # Helper functions to get repo name and default branch
 def get_repo_name(repo_url: str) -> str:
