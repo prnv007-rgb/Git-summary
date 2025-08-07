@@ -1,5 +1,5 @@
-﻿# Git Summary
-# Git Summarizer 
+
+# GitSage A rag based git querying tool
 
 A simple tool that lets you **ask questions about any GitHub repo**.
 
@@ -24,6 +24,7 @@ It clones the repository, reads the files, indexes them using embeddings, and th
 4. When you ask a question, it retrieves the most relevant chunks and sends them to the LLM to answer.
 
 ---
+
 
 
 
