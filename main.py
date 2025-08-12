@@ -39,8 +39,8 @@ INDEX_ROOT.mkdir(parents=True, exist_ok=True)
 class BuildRequest(BaseModel):
     repo_url: str
     branch: Optional[str] = None
-    chunk_size: int = 800
-    chunk_overlap: int = 100
+    chunk_size: int = 600
+    chunk_overlap: int = 75
 
 class QueryRequest(BaseModel):
     repo_url: str
