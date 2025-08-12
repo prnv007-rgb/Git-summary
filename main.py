@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from langchain_community.document_loaders import GitLoader
 from langchain.text_splitter import CharacterTextSplitter
-# NEW: Import Cohere for embeddings and Groq for chat
+
 from langchain_cohere import CohereEmbeddings
 from langchain_groq import ChatGroq
 from langchain.vectorstores import FAISS
@@ -14,8 +14,7 @@ import subprocess
 
 app = FastAPI(title="GitHub RAG Service")
 
-# --- IMPORTANT: SECURE CORS SETTINGS ---
-# Using your specific Vercel URL is more secure than a wildcard.
+
 origins = [
     "https://git-summary-wyrc.vercel.app",
     "http://localhost:5173",
@@ -29,13 +28,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Directory to store cloned repos and FAISS indexes
+
 REPO_ROOT = Path("./repos")
 INDEX_ROOT = Path("./faiss_indexes")
 REPO_ROOT.mkdir(parents=True, exist_ok=True)
 INDEX_ROOT.mkdir(parents=True, exist_ok=True)
 
-# Pydantic models for request data
+
 class BuildRequest(BaseModel):
     repo_url: str
     branch: Optional[str] = None
@@ -47,7 +46,7 @@ class QueryRequest(BaseModel):
     question: str
     k: int = 3
 
-# Helper functions to get repo name and default branch
+
 def get_repo_name(repo_url: str) -> str:
     return Path(repo_url.rstrip("/.")).stem
 
@@ -64,12 +63,12 @@ def get_default_branch(repo_url: str) -> str:
         pass
     return "main"
 
-# Root endpoint for health checks
+
 @app.get("/")
 def read_root():
     return {"message": "RAG Backend is running!"}
 
-# --- UPDATED /build ENDPOINT ---
+
 @app.post("/build")
 def build_index(req: BuildRequest):
     repo_name = get_repo_name(req.repo_url)
@@ -100,8 +99,7 @@ def build_index(req: BuildRequest):
         if not chunks:
             raise ValueError("❌ No chunks generated.")
 
-        # NEW: Use the Cohere embedding model via API
-        # This will automatically use the COHERE_API_KEY from your Render environment
+ 
         embedder = CohereEmbeddings(model="embed-english-light-v3.0")
         
         vectorstore = FAISS.from_documents(chunks, embedding=embedder)
@@ -112,7 +110,7 @@ def build_index(req: BuildRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- UPDATED /query ENDPOINT ---
+
 @app.post("/query")
 def query_index(req: QueryRequest):
     repo_name = get_repo_name(req.repo_url)
@@ -121,7 +119,7 @@ def query_index(req: QueryRequest):
         raise HTTPException(status_code=404, detail="Index not found. Please build first.")
     
     try:
-        # Load index with the same Cohere embedding model
+        
         embedder = CohereEmbeddings(model="embed-english-light-v3.0")
         vectorstore = FAISS.load_local(
             str(index_path),
@@ -132,7 +130,7 @@ def query_index(req: QueryRequest):
         docs = retriever.get_relevant_documents(req.question)
         context = "\n\n".join([d.page_content for d in docs])
 
-        # Call the Groq LLM using the API key from the environment
+        
         llm = ChatGroq(model_name="llama3-8b-8192", temperature=0)
         
         prompt = f"""
